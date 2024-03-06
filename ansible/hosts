@@ -43,3 +43,17 @@
 ## db-[99:101]-node.example.com
 
 
+[webservers]
+vm2
+vm3
+
+[dbservers]
+vm4
+
+[logservers]
+vm5
+
+#添加附属关系
+[lamp:children]
+webservers
+dbservers
