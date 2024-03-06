@@ -1,0 +1,30 @@
+---                      
+- hosts: "{{ host }}"   
+  gather_facts: no
+  remote_user: root      
+  vars:                   
+    env: "{{ version }}"      
+
+  tasks: 
+    - name: install docker-ce package
+      yum:
+        name: "docker-ce-{{ version }}"
+        state: present
+    - name: create docker data dir 
+      shell: "mkdir -pv /home/data/docker"
+    - name: started and enable docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes       
+    - name: copy daemon json
+      copy:
+        src: "/etc/ansible/playbook/deploy_docker/daemon.json"
+        dest: "/etc/docker/daemon.json"
+      notify:
+      - restart docker
+  handlers:
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted

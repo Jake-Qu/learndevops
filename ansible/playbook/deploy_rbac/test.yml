@@ -1,0 +1,28 @@
+---
+- hosts: 10.1.128.103   
+  gather_facts: no
+  remote_user: root      
+  vars:                   
+    env: "{{ yonghu }}" 
+  tasks:
+    - name: install python requrement 石景山
+      pip:
+        executable: /usr/bin/pip3
+        name: ['requests','httpsig']
+        state: "latest"
+        extra_args: "--trusted-host 10.1.128.74 -i http://10.1.128.74:10202/repository/pypi/simple" 
+    - name: copy add_jms file to server 
+      ansible.builtin.copy:
+        src: "create_jms_user.py"
+        dest: "/root/create_jms_user.py"
+    - name: run python file 
+      ansible.builtin.shell:
+        cmd: "python3 create_jms_user.py {{ yonghu }}"
+        chdir: /root/
+      notify:
+      - delete python file from server
+  handlers:
+    - name: delete python file from server
+      ansible.builtin.file:
+        path: "/root/create_jms_user.py"
+        state: absent

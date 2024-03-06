@@ -1,0 +1,106 @@
+---
+- hosts: "10.1.128.103"   
+  gather_facts: no
+  remote_user: root      
+  vars:                   
+    env: "{{ yonghu }}"
+  tasks:
+    - name: create user 
+      user:
+        name: "{{ yonghu }}"
+        groups: docker
+        password: Welcome1*
+    - name: create user-dir
+      file:
+        path: "/root/{{ yonghu }}"
+        state: directory
+        mode: 0755
+    - name: copy k8s yml files
+      template: 
+        src: '{{ item.src }}'
+        dest: '{{ item.dest }}'
+      loop:
+        - { src: '01-namespace.yml.j2',dest: '/root/{{ yonghu }}/01-namespace.yml' }
+        - { src: '02-serviceaccount.yml.j2',dest: '/root/{{ yonghu }}/02-serviceaccount.yml' }
+        - { src: '03-role.yml.j2',dest: '/root/{{ yonghu }}/03-role.yml' }
+        - { src: '04-rolebinding.yml.j2',dest: '/root/{{ yonghu }}/04-rolebinding.yml' }
+    - name: create k8s namespace serviceaccount role rolebindg
+      k8s:
+        state: present
+        kubeconfig: "/root/.kube/config"
+        src: "{{ item }}"
+      loop:
+        - '/root/{{ yonghu }}/01-namespace.yml'
+        - '/root/{{ yonghu }}/02-serviceaccount.yml'
+        - '/root/{{ yonghu }}/03-role.yml'
+        - '/root/{{ yonghu }}/04-rolebinding.yml'
+    - name: get secret
+      shell: "kubectl -n {{ yonghu }}-dev get secret | grep {{ yonghu }}-dev-serviceaccount | awk '{print $1}'"
+      register: my_secret
+
+    - name: get token
+      shell: "kubectl -n {{ yonghu }}-dev get secret  {{ my_secret.stdout  }} -o go-template='{''{.data.token}''}'| base64 -d"
+      register: my_token
+    - name: set vaule
+      set_fact:
+        token: "{{ my_token.stdout }}"
+    - name: set kubeconfig user
+      shell: "kubectl config set-credentials {{ yonghu }}-dev --token={{ token }}"
+    - name: set kubeconfig cluster
+      shell: "kubectl config set-cluster {{ yonghu }}-dev-cluster --insecure-skip-tls-verify=true --server=https://10.1.128.100:8443"
+    - name: set kubeconfig context
+      shell: "kubectl config set-context {{ yonghu }}-dev-context --cluster={{ yonghu }}-dev-cluster --user={{ yonghu }}-dev --namespace={{ yonghu }}-dev"
+    - name: swtich kubeconfig
+      shell: "kubectl config use-context {{ yonghu }}-dev-context"
+    - name: sync .kube to new users home
+      shell: "\\cp -arf .kube /home/{{ yonghu }}/"
+    - name: restore root kubeconfig
+      shell: "\\cp -arf .kube_bak .kube"
+    - name: change new user kubeconfig owner
+      file:
+        path: "/home/{{ yonghu }}/.kube"
+        owner: "{{ yonghu }}"
+        group: "{{ yonghu }}"
+        recurse: yes
+      tags: change
+    - name: install python requrement
+      pip:
+        executable: /usr/bin/pip3
+        name: ['requests','httpsig']
+        state: "latest"
+        extra_args: "--trusted-host 10.1.128.74 -i http://10.1.128.74:10202/repository/pypi/simple" 
+    - name: copy add_jms file to server 
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop:
+        - { src: 'scripts/01-create_jms_asset_user.py',dest: '/root/01-create_jms_asset_user.py' }
+        - { src: 'scripts/02-create_jms_system_user.py',dest: '/root/02-create_jms_system_user.py' }
+        - { src: 'scripts/03-create_assest_permiss.py',dest: '/root/03-create_assest_permiss.py' }
+    - name: run python file01 
+      ansible.builtin.shell:
+        cmd: "python3 01-create_jms_asset_user.py {{ yonghu }}"
+        chdir: /root/
+    - name: run python file02
+      ansible.builtin.shell:
+        cmd: "python3 02-create_jms_system_user.py {{ yonghu }}"
+        chdir: /root/
+      register: to_admin_message 
+    - name: run python file03
+      ansible.builtin.shell:
+        cmd: "python3 03-create_assest_permiss.py {{ yonghu }}"
+        chdir: /root/
+      notify:
+      - delete python file from server
+    - name: final message
+      debug:
+        msg: "{{ to_admin_message.stdout }}"
+  handlers:
+    - name: delete python file from server
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/root/01-create_jms_asset_user.py'
+        - '/root/02-create_jms_system_user.py'
+        - '/root/03-create_assest_permiss.py'

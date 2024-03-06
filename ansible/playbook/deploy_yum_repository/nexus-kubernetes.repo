@@ -1,0 +1,7 @@
+[nexus-kubernetes]
+name=Kubernetes
+baseurl=http://10.1.130.122:10202/repository/yum-kubernetes/yum/repos/kubernetes-el7-$basearch
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+gpgkey=http://10.1.130.122:10202/repository/yum-kubernetes/yum/doc/yum-key.gpg

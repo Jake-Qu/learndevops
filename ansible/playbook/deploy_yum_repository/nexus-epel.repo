@@ -1,0 +1,5 @@
+[nexus-epel]
+name=Nexus-epel
+baseurl=http://10.1.130.122:10202/repository/epelproxy/$releasever/$basearch/
+enabled=1
+gpgcheck=0

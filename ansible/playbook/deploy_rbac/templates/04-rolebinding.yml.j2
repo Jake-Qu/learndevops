@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ yonghu }}-dev-rolebinding
+  namespace: {{ yonghu }}-dev
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ yonghu }}-dev-role
+subjects:
+- kind: ServiceAccount
+  name: {{ yonghu }}-dev-serviceaccount
+  namespace: {{ yonghu }}-dev

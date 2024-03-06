@@ -1,0 +1,30 @@
+---                      
+- hosts: "{{ host }}"   
+  remote_user: root      
+
+  tasks:
+    - name: install chrony service
+      yum:
+        name: chrony
+        state: latest 
+    - name: backup original chrony.conf file
+      shell: 
+        cmd: "mv /etc/chrony.conf /etc/chrony.conf.bak"
+    - name: copy client chrony file
+      copy:
+        src: "/etc/ansible/playbook/deploy_chronyc/chrony.conf"
+        dest: "/etc/chrony.conf"
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - start chrony service
+    - name: enable chrony service
+      service:
+        name: chronyd
+        enabled: yes
+  handlers:
+    - name: start chrony service
+      service:
+        name: chronyd
+        state: restarted 

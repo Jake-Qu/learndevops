@@ -1,0 +1,17 @@
+- hosts: "{{ host }}"
+  user: root
+  gather_facts: false     #是否执行setup模块，搜集对方机器的信息
+  tasks:
+    - name: create backup directory
+      file:
+        path: /etc/yum.repos.d/backups
+        state: directory
+        group: root
+    - name: move old repo file to backup directory
+      shell: 'mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/backups/'
+    - name: copy nexus repo to server
+      copy:
+        src: "{{ item }}"
+        dest: /etc/yum.repos.d/
+      with_fileglob:
+        - '/etc/ansible/playbook/deploy_yum_repository/*.repo' 

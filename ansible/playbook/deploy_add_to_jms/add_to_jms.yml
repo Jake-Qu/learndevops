@@ -1,0 +1,40 @@
+---                      
+- hosts: "{{ host }}"   
+  gather_facts: no
+  remote_user: root      
+  vars:                   
+    env: "{{ huanjing }}"      
+  tasks: 
+    - name: install python3 package
+      yum:
+        name: ['python3', 'python-setuptools','gcc','gcc-c++']
+        state: present
+    - name: copy add_jms file to server 
+      copy: 
+        src: "/etc/ansible/playbook/deploy_add_to_jms/add_to_jms.py"
+        dest: "/root/add_to_jms.py"
+    - name: install python requrement 石景山
+      pip:
+        executable: /usr/bin/pip3
+        name: ['requests','httpsig']
+        state: "latest"
+        extra_args: "--trusted-host 10.1.130.122 -i http://10.1.130.122:10202/repository/pypi/simple" 
+      when: huanjing == "shijingshan"
+    - name: install python requement lyzdOps
+      pip:
+        executable: /usr/bin/pip3
+        name: ['requests','httpsig']
+        state: "latest"
+        extra_args: "--trusted-host 10.1.130.122 -i http://10.1.130.122:10202/repository/pypi/simple"
+      when: huanjing == "lyzdOps"
+    - name: run python file 
+      shell:
+        cmd: "python3 add_to_jms.py {{ huanjing }}"
+        chdir: /root/
+      notify:
+      - delete add_jms file from server
+  handlers:
+    - name: delete add_jms file from server
+      file: 
+        path: "/root/add_to_jms.py"
+        state: absent
