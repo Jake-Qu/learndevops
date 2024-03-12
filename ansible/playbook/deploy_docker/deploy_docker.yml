@@ -32,7 +32,10 @@
         state: present
       when: version is undefined
     - name: create docker data dir
-      shell: "mkdir -pv /data/docker"
+      file:
+        path: /data/docker
+        state: directory
+        mode: '0755'
     - name: started and enable docker service
       service:
         name: docker
