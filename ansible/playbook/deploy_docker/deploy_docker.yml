@@ -1,22 +1,43 @@
----                      
-- hosts: "{{ host }}"   
+---
+- hosts: "{{ host }}"
   gather_facts: no
-  remote_user: root      
-  vars:                   
-    env: "{{ version }}"      
+  remote_user: root
+  vars:
+    env: "{{ version }}"
 
-  tasks: 
-    - name: install docker-ce package
+  tasks:
+    - name: pre step1  for install docker-ce
+      yum:
+        name:
+          - docker
+          - docker-common
+          - docker-selinux
+          - docker-engine
+        state: removed
+    - name: pre step2 for install docker-ce
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+        state: present
+    - name: install docker-ce package specificy version
       yum:
         name: "docker-ce-{{ version }}"
         state: present
-    - name: create docker data dir 
-      shell: "mkdir -pv /home/data/docker"
+      when: version is defined
+    - name: install docker-ce package
+      yum:
+        name: "docker-ce"
+        state: present
+      when: version is undefined
+    - name: create docker data dir
+      shell: "mkdir -pv /data/docker"
     - name: started and enable docker service
       service:
         name: docker
         state: started
-        enabled: yes       
+        enabled: yes
     - name: copy daemon json
       copy:
         src: "/etc/ansible/playbook/deploy_docker/daemon.json"
