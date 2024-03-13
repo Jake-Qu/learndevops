@@ -9,9 +9,52 @@
         group: root
     - name: move old repo file to backup directory
       shell: 'mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/backups/'
-    - name: copy nexus repo to server
-      copy:
-        src: "{{ item }}"
-        dest: /etc/yum.repos.d/
-      with_fileglob:
-        - '/etc/ansible/playbook/deploy_yum_repository/*.repo' 
+    - name: import yum repositories centos-base
+      yum_repository:
+        name: nexus-centos-base
+        description: nexus-centos-base
+        file: nexus-centos
+        baseurl: http://10.1.130.122:10202/repository/yumproxy/$releasever/os/$basearch/
+        gpgcheck: no
+    - name: import yum repositories centos-updates
+      yum_repository:
+        name: nexus-centos-updates
+        description: nexus-centos-updates
+        file: nexus-centos
+        baseurl: http://10.1.130.122:10202/repository/yumproxy/$releasever/updates/$basearch/
+        gpgcheck: no
+    - name: import yum repositories centos-extras
+      yum_repository:
+        name: nexus-centos-extras
+        description: nexus-centos-extras
+        file: nexus-centos
+        baseurl: http://10.1.130.122:10202/repository/yumproxy/$releasever/extras/$basearch/
+        gpgcheck: no
+    - name: import yum repositories centos-plus
+      yum_repository:
+        name: nexus-centos-plus
+        description: nexus-centos-plus
+        file: nexus-centos
+        baseurl: http://10.1.130.122:10202/repository/yumproxy/$releasever/centosplus/$basearch/
+        gpgcheck: no
+    - name: import yum repositories epel
+      yum_repository:
+        name: nexus-epel
+        description: nexus-epel
+        file: nexus-epel
+        baseurl: http://10.1.130.122:10202/repository/epelproxy/$releasever/$basearch/
+        gpgcheck: no
+    - name: import yum repositories docker
+      yum_repository:
+        name: nexus-docker-ce-stable
+        description: nexus-docker-ce-stable
+        file: nexus-docker
+        baseurl: http://10.1.130.122:10202/repository/yum-docker/linux/centos/$releasever/$basearch/stable
+        gpgcheck: no
+    - name: import yum repositories kubernetes
+      yum_repository:
+        name: nexus-kubernetes
+        description: nexus-kubernetes
+        file: nexus-kubernetes
+        baseurl: http://10.1.130.122:10202/repository/yum-kubernetes/yum/repos/kubernetes-el7-$basearch
+        gpgcheck: no
