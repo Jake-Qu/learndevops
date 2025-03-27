@@ -8,7 +8,7 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: argocd/sample-app-deployment
+    path: argocd/sample-app-deployment/
     repoURL: https://github.com/Jake-Qu/learndevops.git
   syncPolicy:
     automated: {}
